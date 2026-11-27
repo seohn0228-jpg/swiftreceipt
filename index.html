@@ -81,6 +81,14 @@ img{max-width:100%}
   font-size:12px;color:var(--muted);padding-left:14px;margin-left:2px;
   border-left:1px solid var(--line);white-space:nowrap;
 }
+/* app switcher: SwiftBill (invoices) <-> SwiftReceipt (receipts), same site */
+.app-switch{display:flex;align-items:center;gap:2px;padding:3px;border:1px solid var(--line);border-radius:10px;background:var(--line-soft);flex:none}
+.app-switch a{display:inline-flex;align-items:center;min-height:30px;padding:0 10px;border-radius:7px;font-size:12.5px;font-weight:650;color:var(--muted);text-decoration:none;white-space:nowrap}
+.app-switch a:hover{color:var(--ink)}
+.app-switch a[aria-current="page"]{background:var(--card);color:var(--ink);box-shadow:0 1px 2px rgba(0,0,0,.08)}
+@media (max-width:560px){.brand-name{display:none}}
+@media (max-width:480px){#statusPill{display:none}}
+@media (max-width:379px){.app-switch a{padding:0 7px;font-size:12px}}
 .header-right{margin-left:auto;display:flex;align-items:center;gap:10px;min-width:0}
 
 .pill{
@@ -741,7 +749,7 @@ body.is-modal .toast.show{transform:translate(-50%,0)}
       </span>
       <span class="brand-name">SwiftReceipt</span>
     </span>
-    <span class="brand-tag">Payment receipt studio</span>
+    <nav class="app-switch" aria-label="Switch app"><a href="../swiftbill/">Invoices</a><a href="../swiftreceipt/" aria-current="page">Receipts</a></nav>
     <div class="header-right">
       <span class="pill" id="statusPill">3 free PDFs left</span>
       <button type="button" class="btn btn-pro btn-sm" id="unlockBtn"><span class="unlock-long">Unlock Pro — $9</span><span class="unlock-short">Pro — $9</span></button>
@@ -1098,6 +1106,7 @@ body.is-modal .toast.show{transform:translate(-50%,0)}
     <div class="price-row"><span class="price">$9</span><span class="price-note">once · yours forever · no account</span></div>
     <a class="btn btn-primary btn-block" href="#" id="buyBtn" target="_blank" rel="noopener">Get Pro — $9</a>
     <p class="tiny">Secure checkout via Gumroad · Your license key is emailed right after purchase. Already bought? Enter it below.</p>
+    <p class="tiny kit-offer">Need invoices too? <a href="https://swiftbill4.gumroad.com/l/kit" target="_blank" rel="noopener">Get SwiftBill + SwiftReceipt for $14</a> — one key unlocks both.</p>
     <div class="code-block">
       <div class="divider">Already purchased?</div>
       <label for="codeInput" style="margin-top:14px">License key</label>
@@ -1152,7 +1161,9 @@ body.is-modal .toast.show{transform:translate(-50%,0)}
      GUMROAD_PRODUCT_IDS Gumroad product IDs whose license keys unlock Pro (this app first; the bundle goes here too)
      OWNER_CODE_HASHES   SHA-256 of the owner's test key (the key itself is never in the source) */
   const CHECKOUT_URL = 'https://swiftbill4.gumroad.com/l/receipt';
-  const GUMROAD_PRODUCT_IDS = ['vLo6JYrowpBZ4_jcufsJpw=='];
+  const BUNDLE_PRODUCT_ID = '51hSZcZ0TpRMp9nudAF_Aw==';               /* Swift Freelancer Kit: SwiftBill Pro + SwiftReceipt Pro */
+  const BUNDLE_URL = 'https://swiftbill4.gumroad.com/l/kit';
+  const GUMROAD_PRODUCT_IDS = ['vLo6JYrowpBZ4_jcufsJpw==', BUNDLE_PRODUCT_ID];
   const CONTACT_EMAIL = 'swiftbill26@gmail.com';
   const MAX_DEVICES = 3;
   const RECHECK_MS = 10 * 60 * 1000;                    /* re-check a Gumroad key at most every 10 min (on each visit) */
@@ -2048,15 +2059,32 @@ body.is-modal .toast.show{transform:translate(-50%,0)}
     }
     return last;
   }
+  /* Swift Freelancer Kit (bundle): one license key unlocks SwiftBill and SwiftReceipt.
+     Both apps live on the same site, so a bundle key accepted in one app is shared through
+     this storage key and picked up by the other without counting the browser twice. */
+  const KIT_KEY = 'swiftkit.license.v1';
+  function readKit() {
+    try { const k = JSON.parse(localStorage.getItem(KIT_KEY) || 'null'); return (k && k.license && k.pid === BUNDLE_PRODUCT_ID) ? k : null; } catch (e) { return null; }
+  }
+  function writeKit(license, at) {
+    const k = readKit();
+    if (k && k.license === license) return;   /* already shared — rewriting would wake the other app's tab for nothing */
+    try { localStorage.setItem(KIT_KEY, JSON.stringify({ license: license, pid: BUNDLE_PRODUCT_ID, checkedAt: at || Date.now() })); } catch (e) {}
+  }
+  function clearKit(license) {
+    try { const k = readKit(); if (k && (!license || k.license === license)) localStorage.removeItem(KIT_KEY); } catch (e) {}
+  }
   function grantPro(key, src, pid) {
     proActive = true;
     flags.license = key; flags.src = src; flags.pid = pid || ''; flags.checkedAt = Date.now();
+    if (src === 'gumroad' && pid === BUNDLE_PRODUCT_ID) writeKit(key, flags.checkedAt);
     persist();
     closeModals(); refreshAll();
     toast('Pro unlocked — unlimited exports, watermark removed.');
   }
   function revokePro(message) {
     const was = proActive;
+    if (flags.pid === BUNDLE_PRODUCT_ID && message) clearKit(flags.license);   /* refunded/disabled bundle key: drop it for both apps */
     proActive = false;
     flags.license = ''; flags.src = ''; flags.pid = ''; flags.checkedAt = 0;
     save(K_FLAGS, flags);
@@ -2084,7 +2112,8 @@ body.is-modal .toast.show{transform:translate(-50%,0)}
     try {
       if (await isOwnerCode(code)) { grantPro(code.toUpperCase(), 'owner'); return; }
       if (!GUMROAD_PRODUCT_IDS.length) { err.textContent = KEY_MSG.invalid; return; }
-      const same = flags.src === 'gumroad' && flags.license === code;   /* this browser already counted */
+      const kit = readKit();
+      const same = (flags.src === 'gumroad' && flags.license === code) || (kit && kit.license === code);   /* this browser already counted */
       const r = await gumroadVerify(code, false);
       if (r.kind !== 'ok') { err.textContent = KEY_MSG[r.kind] || KEY_MSG.invalid; return; }
       if (same) { grantPro(code, 'gumroad', r.pid); return; }
@@ -2101,6 +2130,11 @@ body.is-modal .toast.show{transform:translate(-50%,0)}
      Gumroad keys are re-checked on each visit (at most every 10 min): refunded/disabled/unknown keys lose Pro;
      network or server trouble keeps Pro for up to 30 days after the last good check. */
   async function initLicense() {
+    /* a bundle key unlocked in SwiftBill on this browser unlocks SwiftReceipt too */
+    if (!flags.license || flags.src !== 'gumroad') {
+      const kit = flags.src === 'owner' ? null : readKit();
+      if (kit) { flags.license = kit.license; flags.src = 'gumroad'; flags.pid = kit.pid; flags.checkedAt = +kit.checkedAt || 0; save(K_FLAGS, flags); }
+    }
     const lic = String(flags.license || '');
     if (flags.src === 'owner') { if (await isOwnerCode(lic)) { proActive = true; refreshAll(); } else revokePro(''); return; }
     if (flags.src !== 'gumroad' || !lic || !GUMROAD_PRODUCT_IDS.length) { if (flags.license || flags.src) revokePro(''); return; }
@@ -2113,7 +2147,7 @@ body.is-modal .toast.show{transform:translate(-50%,0)}
     if (Date.now() - lastTry < RECHECK_MS && proActive) return;
     try { sessionStorage.setItem('swiftreceipt.licCheck', String(Date.now())); } catch (e) {}
     const r = await gumroadVerify(lic, false, pid || undefined);
-    if (r.kind === 'ok') { flags.checkedAt = Date.now(); if (r.pid) flags.pid = r.pid; save(K_FLAGS, flags); if (!proActive) { proActive = true; refreshAll(); } return; }
+    if (r.kind === 'ok') { flags.checkedAt = Date.now(); if (r.pid) flags.pid = r.pid; save(K_FLAGS, flags); if (flags.pid === BUNDLE_PRODUCT_ID) writeKit(lic, flags.checkedAt); if (!proActive) { proActive = true; refreshAll(); } return; }
     if (r.kind === 'invalid' || r.kind === 'revoked') { revokePro('Your Pro license is no longer active (refunded or disabled). Questions? ' + CONTACT_EMAIL); return; }
     if (!proActive && last > 0) toast('Couldn’t confirm your Pro license — connect to the internet and reopen SwiftReceipt.');
   }
@@ -2532,7 +2566,17 @@ body.is-modal .toast.show{transform:translate(-50%,0)}
       }
     });
     /* SwiftBill may be open in another tab — refresh the import button when its data changes */
-    window.addEventListener('storage', e => { if (!e.key || e.key.indexOf('swiftbill.') === 0) updateChrome(); });
+    window.addEventListener('storage', e => {
+      if (!e.key || e.key.indexOf('swiftbill.') === 0) updateChrome();
+      if (e.key === KIT_KEY) {
+        let nk = null; try { nk = JSON.parse(e.newValue || 'null'); } catch (x) {}
+        const nl = nk && nk.license ? nk.license : '';
+        const mine = flags.pid === BUNDLE_PRODUCT_ID ? String(flags.license || '') : '';
+        if (nl === mine) return;                       /* nothing changed for this app */
+        if (!nl && mine) { revokePro(''); return; }      /* the other app found the bundle key refunded/disabled */
+        if (nl && !proActive) { try { sessionStorage.removeItem('swiftreceipt.licCheck'); } catch (x) {} initLicense(); }
+      }
+    });
     $$('[data-close]').forEach(b => b.addEventListener('click', closeModals));
     $$('.modal-backdrop').forEach(b => b.addEventListener('click', e => { if (e.target === b) closeModals(); }));
     document.addEventListener('keydown', e => { if (e.key === 'Escape') closeModals(); });
