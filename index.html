@@ -217,13 +217,13 @@ input[type=date]{min-height:42px}
 
 /* line items */
 .items-head{
-  display:grid;grid-template-columns:minmax(0,1fr) minmax(0,60px) minmax(0,96px) minmax(0,100px) 30px;gap:10px;
+  display:grid;grid-template-columns:minmax(0,1fr) minmax(0,60px) minmax(0,96px) minmax(0,100px) 36px;gap:10px;
   font-size:10.5px;font-weight:700;letter-spacing:.07em;text-transform:uppercase;color:#9c978b;
   padding:0 0 8px;border-bottom:1px solid var(--line-soft);margin-top:4px;
 }
 .items-head span:nth-child(2),.items-head span:nth-child(3),.items-head span:nth-child(4){text-align:right}
 .item-row{
-  display:grid;grid-template-columns:minmax(0,1fr) minmax(0,60px) minmax(0,96px) minmax(0,100px) 30px;gap:10px;
+  display:grid;grid-template-columns:minmax(0,1fr) minmax(0,60px) minmax(0,96px) minmax(0,100px) 36px;gap:10px;
   align-items:center;padding:9px 0;border-bottom:1px solid var(--line-soft);
 }
 .item-row input{min-height:40px}
@@ -231,7 +231,7 @@ input[type=date]{min-height:42px}
 .it-amt{text-align:right;font-variant-numeric:tabular-nums;font-size:13.5px;font-weight:650;color:var(--ink-2);overflow:hidden;text-overflow:ellipsis}
 .it-lbl{display:none}
 .it-del{
-  width:30px;height:30px;border:0;border-radius:8px;background:transparent;color:#a8a292;
+  width:36px;height:36px;border:0;border-radius:8px;background:transparent;color:#a8a292;
   font-size:19px;line-height:1;cursor:pointer;display:grid;place-items:center;padding:0;
 }
 .it-del:hover{background:#fdf0ef;color:var(--danger)}
@@ -386,7 +386,15 @@ input[type=date]{min-height:42px}
   display:flex;align-items:center;justify-content:space-between;gap:16px;flex-wrap:wrap;
   padding:26px 4px 0;color:var(--faint);font-size:12px;
 }
-.reset-btn{background:none;border:0;padding:0;color:#a8a292;font-size:11.5px;cursor:pointer;text-decoration:underline;text-underline-offset:3px}
+.reset-btn{background:none;border:0;padding:10px 6px;margin:-10px -6px;min-height:40px;color:#a8a292;font-size:11.5px;cursor:pointer;text-decoration:underline;text-underline-offset:3px}
+/* fingers need bigger targets than mouse pointers */
+@media (pointer:coarse){
+  .it-del{width:44px;height:44px}
+  .reset-btn{min-height:44px}
+}
+@media (pointer:coarse) and (min-width:721px){
+  .items-head,.item-row{grid-template-columns:minmax(0,1fr) minmax(0,60px) minmax(0,96px) minmax(0,100px) 44px}
+}
 .reset-btn:hover{color:#6e6a60}
 
 /* ---------- 5. receipt sheet ---------- */
@@ -630,7 +638,7 @@ body.is-modal .toast.show{transform:translate(-50%,0)}
   input[type=text],input[type=email],input[type=number],input[type=date],select,textarea{font-size:16px}
   .items-head{display:none}
   .item-row{
-    grid-template-columns:minmax(0,60px) minmax(0,1fr) minmax(0,1fr) 30px;
+    grid-template-columns:minmax(0,60px) minmax(0,1fr) minmax(0,1fr) 44px;
     grid-template-areas:"desc desc desc del" "qty rate amt amt";
     row-gap:9px;padding:12px 0;
   }
@@ -689,8 +697,10 @@ body.is-modal .toast.show{transform:translate(-50%,0)}
   #printRoot .s-items thead{display:table-header-group}
   #printRoot .s-dim{visibility:hidden}   /* editor placeholders ("Item", "Client name") never print */
   #printRoot .s-items tr,#printRoot .s-summary,#printRoot .s-foot{break-inside:avoid}
-  /* the free watermark runs along the bottom margin, clear of the content */
-  #printRoot .s-wm{position:fixed;bottom:5mm;left:0;right:0;color:#b9b3a5}
+  /* free watermark: Chromium 131+ prints it in every page's bottom margin (see doPrint);
+     other browsers get one line after the content */
+  #printRoot .s-wm{position:static;margin-top:22px;color:#b9b3a5}
+  body.wm-pages #printRoot .s-wm{display:none}
 }
 </style>
 </head>
@@ -1061,6 +1071,7 @@ body.is-modal .toast.show{transform:translate(-50%,0)}
   const CHECKOUT_URL = '';
   const OWNER_CODE_HASHES = ['9c2cc8fd61ee9b506fd82cc60ed0eef4d57089b46154679989a298d18756225e'];
   const FREE_LIMIT = 3;
+  const FREE_RETRY_MS = 30 * 60 * 1000; /* the same receipt can be exported again for 30 min without counting (print window closed) */
 
   const K_FLAGS = 'swiftreceipt.flags.v1';
   const K_PROFILE = 'swiftreceipt.profile.v1';
@@ -1690,8 +1701,24 @@ body.is-modal .toast.show{transform:translate(-50%,0)}
     clearTimeout(titleTimer);
     document.title = BASE_TITLE;
   }
+  /* browsers that can print text in the page margin (@page margin boxes, Chromium 131+) */
+  const MARGIN_BOXES = (() => {
+    try {
+      const b = (navigator.userAgentData && navigator.userAgentData.brands) || [];
+      return b.some(x => /Chromium/.test(x.brand) && parseInt(x.version, 10) >= 131);
+    } catch (e) { return false; }
+  })();
+  function setPageWatermark(on) {
+    let st = $('#wmPageStyle');
+    if (!st) { st = document.createElement('style'); st.id = 'wmPageStyle'; document.head.appendChild(st); }
+    st.textContent = on
+      ? '@page{@bottom-center{content:"Made with SwiftReceipt \\2014  free version";font-family:' + 'Arial,sans-serif;font-size:8.5px;letter-spacing:.05em;color:#b9b3a5}}'
+      : '';
+    document.body.classList.toggle('wm-pages', on);
+  }
   function doPrint() {
     renderSheet();
+    setPageWatermark(!isPro() && MARGIN_BOXES);
     const root = $('#printRoot');
     const sheet = $('#sheet');
     const node = sheet.cloneNode(true);
@@ -1703,8 +1730,15 @@ body.is-modal .toast.show{transform:translate(-50%,0)}
     window.print();
     titleTimer = setTimeout(restoreTitle, 5000);
   }
-  window.addEventListener('afterprint', () => { restoreTitle(); $('#printRoot').innerHTML = ''; });
+  window.addEventListener('afterprint', () => { restoreTitle(); $('#printRoot').innerHTML = ''; setPageWatermark(false); });
 
+  /* fingerprint of what is on the receipt right now */
+  function docKey() {
+    const t = JSON.stringify([docState, profile.name, profile.email, profile.address, profile.taxId, profile.logo.length, profile.signMode, profile.signName]);
+    let h = 5381;
+    for (let i = 0; i < t.length; i++) h = ((h * 33) ^ t.charCodeAt(i)) >>> 0;
+    return h.toString(36) + '.' + t.length;
+  }
   function onExport() {
     const prob = exportProblem();
     if (prob) { toast(prob[0]); focusField(prob[1]); return; }   /* nothing is counted */
@@ -1714,15 +1748,25 @@ body.is-modal .toast.show{transform:translate(-50%,0)}
       return;
     }
     updateChrome();
+    const key = docKey();
+    const ex = flags.exports;
+    if (ex.month === monthKey() && num(ex.count) > 0 && ex.lastKey === key && Date.now() - (num(ex.lastAt) || 0) < FREE_RETRY_MS) {
+      doPrint();   /* same receipt again (print window was closed) — doesn't count */
+      setTimeout(() => toast('Same receipt as before — this one didn’t use a free PDF.'), 700);
+      return;
+    }
     if (exportsLeft() > 0) {
       if (flags.exports.month !== monthKey()) flags.exports = { month: monthKey(), count: 0 };
       flags.exports.count = num(flags.exports.count) + 1;
+      flags.exports.lastKey = key;
+      flags.exports.lastAt = Date.now();
       save(K_FLAGS, flags);
       updateChrome();
       renderSheet();
       doPrint();
       const left = exportsLeft();
-      setTimeout(() => toast(left === 0 ? 'That was your last free PDF this month. Pro removes the limit.' : left + ' free PDF' + (left === 1 ? '' : 's') + ' left this month.'), 700);
+      const again = ' Closed the print window? Export the same receipt within 30 min — it won’t count.';
+      setTimeout(() => toast((left === 0 ? 'That was your last free PDF this month.' : left + ' free PDF' + (left === 1 ? '' : 's') + ' left this month.') + again), 700);
     } else {
       openPro('limit');
     }
