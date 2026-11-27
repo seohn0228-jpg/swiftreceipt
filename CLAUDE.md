@@ -9,7 +9,7 @@
 - 무료: 한 달 PDF 3장, 워터마크. 같은 영수증을 30분 안에 다시 뽑으면 세지 않음. Pro: 무제한, 디자인 3종, 로고·서명, 워터마크 없음, 저장한 영수증(최대 20, 내보내면 자동 저장)·열기·복제·백업/복원.
 - Pro 판단: 저장된 키를 시작할 때 다시 확인(저장된 pro:true는 무시). 검로드 라이선스(2026-11-27): 상품 SwiftReceipt Pro(id vLo6JYrowpBZ4_jcufsJpw==, https://swiftbill4.gumroad.com/l/receipt, 9달러). `GUMROAD_PRODUCT_IDS`에 묶음 상품 id를 더하면 묶음 키도 받음. 기기 3대(확인 뒤 +1), 방문 때마다(10분에 1번) 재확인, 환불·비활성 키는 Pro 끔, 서버·인터넷 오류는 마지막 확인 뒤 30일까지 유지.
 - SwiftBill 연동: 같은 사이트(seohn0228-jpg.github.io)라 SwiftBill 브라우저 저장 내용(`swiftbill.doc.v1`, `swiftbill.history.v1`, `swiftbill.profile.v1`)을 **읽기만** 해서 "Import from SwiftBill"(무료)로 인보이스를 영수증으로 만든다. SwiftBill 저장 형식을 바꾸면 이 기능도 확인한다.
-- 예시 데이터 보호: 예시 내용(세금번호·손님·품목 등)이 남아 있으면 출력을 막는다. 예시 값을 바꾸면 `sampleLeft()`도 같이 본다.
+- 빈칸으로 시작(2026-11-27 대표 결정, B안): 새 손님은 모든 칸이 비어 있고 칸 안 회색 "e.g. …" 힌트만 보인다. 화폐는 브라우저 언어로 추측(영국 GBP, 유럽 EUR, 한국 KRW, 일본 JPY, 캐나다 CAD, 호주 AUD, 그 외 USD). 예전 버전이 채워 둔 예시(Mira Chen Studio·Northwind 등, `legacyProfile()`·`legacyDoc()`)가 저장돼 있으면 시작할 때 조용히 지우고, 그래도 남으면 출력을 막는다(`sampleLeft()`). SwiftBill도 빈칸 시작이다.
 - 서버 없는 한계(과장 금지): 코드 수정·시크릿 창·저장소 삭제로 무료 횟수·Pro를 완전히 막을 수 없음.
 - 정책 페이지(2026-11-27, SwiftBill과 같은 내용): `privacy.html`, `terms.html`, `refund.html`. 문의 메일 swiftbill26@gmail.com(index.html 아래쪽 링크와 정책 페이지 3개에 들어 있음). 환불: 구매 후 7일 안 전액. 기기 3대·오프라인 30일 문구는 검로드 연결 때 그대로 구현한다.
 - 묶음 판매(2026-11-27 대표 결정, 방법 B): 두 앱은 따로 두고 "하나처럼" 잇는다 — 두 앱 위쪽 [Invoices | Receipts] 전환 버튼, 묶음 키 한 번 입력으로 둘 다 Pro(같은 사이트 저장 공간 공유, 기기 수는 브라우저당 1번), 가게 정보 공유(선택). 묶음 = 검로드 보통 상품 + 라이선스 키, 추천 14달러(단품 각 9달러). 완전 통합(방법 A)은 묶음 반응을 본 뒤 다시 정함. **대표가 검로드에 SwiftReceipt Pro·묶음 상품을 올린 뒤 말하면 시작**(SwiftBill도 고치므로 백업 브랜치 먼저).

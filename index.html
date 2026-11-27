@@ -191,10 +191,6 @@ select{
 input[type=date]{min-height:42px}
 .hint{font-size:11px;color:var(--faint);line-height:1.35}
 .hint.is-warn{color:var(--danger)}
-.sample-bar{display:flex;align-items:center;justify-content:space-between;gap:12px;flex-wrap:wrap;
-  background:#fff8e6;border:1px solid #f1dfae;border-radius:var(--radius-sm);padding:10px 14px;margin-bottom:12px;
-  font-size:13px;color:#6b4f12;line-height:1.4}
-.sample-bar b{color:#4a360c}
 .tb-actions{display:flex;gap:8px;flex-wrap:wrap;margin-top:12px}
 .tb-actions .btn{min-height:40px}
 .tb-actions .pro-tag{margin-left:6px}
@@ -807,10 +803,6 @@ body.is-modal .toast.show{transform:translate(-50%,0)}
       </div>
 
       <div class="editor">
-        <div class="sample-bar" id="sampleBar" hidden>
-          <span><b>This is a sample receipt.</b> Replace the example details with yours — or clear them all at once.</span>
-          <button type="button" class="btn btn-ghost btn-sm" id="clearSample">Clear sample details</button>
-        </div>
 
         <!-- ── business ──────────────────────────────────────── -->
         <section class="card acc open" id="sec-biz">
@@ -823,19 +815,19 @@ body.is-modal .toast.show{transform:translate(-50%,0)}
             <div class="grid2">
               <div class="field span2">
                 <label for="bizName">Business or your name</label>
-                <input type="text" id="bizName" data-bind="profile.name" placeholder="Mira Chen Studio" autocomplete="organization">
+                <input type="text" id="bizName" data-bind="profile.name" placeholder="e.g. Mira Chen Studio" autocomplete="organization">
               </div>
               <div class="field">
                 <label for="bizEmail">Email</label>
-                <input type="email" id="bizEmail" data-bind="profile.email" placeholder="hello@yourstudio.com" autocomplete="email">
+                <input type="email" id="bizEmail" data-bind="profile.email" placeholder="e.g. hello@yourstudio.com" autocomplete="email">
               </div>
               <div class="field">
                 <label for="bizTax">Tax / VAT ID <span class="hint">(optional)</span></label>
-                <input type="text" id="bizTax" data-bind="profile.taxId" placeholder="GB 384 9201 77">
+                <input type="text" id="bizTax" data-bind="profile.taxId" placeholder="e.g. GB 123 4567 89">
               </div>
               <div class="field span2">
                 <label for="bizAddress">Address <span class="hint">(optional)</span></label>
-                <textarea id="bizAddress" data-bind="profile.address" rows="2" placeholder="48 Kingsland Road&#10;London E2 8DP, United Kingdom"></textarea>
+                <textarea id="bizAddress" data-bind="profile.address" rows="2" placeholder="e.g. 10 Market Street&#10;London E2 8DP, United Kingdom"></textarea>
               </div>
             </div>
             <div class="upload-row">
@@ -861,19 +853,19 @@ body.is-modal .toast.show{transform:translate(-50%,0)}
             <div class="grid2">
               <div class="field span2">
                 <label for="clientName">Client name</label>
-                <input type="text" id="clientName" data-bind="doc.clientName" placeholder="Northwind Studio" autocomplete="off">
+                <input type="text" id="clientName" data-bind="doc.clientName" placeholder="e.g. Northwind Studio" autocomplete="off">
               </div>
               <div class="field">
                 <label for="clientEmail">Client email <span class="hint">(optional)</span></label>
-                <input type="email" id="clientEmail" data-bind="doc.clientEmail" placeholder="billing@northwind.studio">
+                <input type="email" id="clientEmail" data-bind="doc.clientEmail" placeholder="e.g. billing@client.com">
               </div>
               <div class="field">
                 <label for="reference">Reference / Invoice # <span class="hint">(optional)</span></label>
-                <input type="text" id="reference" data-bind="doc.reference" placeholder="INV-0024">
+                <input type="text" id="reference" data-bind="doc.reference" placeholder="e.g. INV-0024">
               </div>
               <div class="field span2">
                 <label for="clientAddress">Client address <span class="hint">(optional)</span></label>
-                <textarea id="clientAddress" data-bind="doc.clientAddress" rows="2" placeholder="1200 Market Street, Suite 400&#10;San Francisco, CA 94102"></textarea>
+                <textarea id="clientAddress" data-bind="doc.clientAddress" rows="2" placeholder="e.g. 1200 Market Street, Suite 400&#10;San Francisco, CA 94102"></textarea>
               </div>
               <div class="field span2">
                 <label for="method">Payment method</label>
@@ -1003,7 +995,7 @@ body.is-modal .toast.show{transform:translate(-50%,0)}
           <div class="acc-body" id="body-notes">
             <div class="field">
               <label for="notes">Note / thank-you <span class="hint">(optional)</span></label>
-              <textarea id="notes" data-bind="doc.notes" rows="3" placeholder="Thank you — it was a pleasure working with you."></textarea>
+              <textarea id="notes" data-bind="doc.notes" rows="3" placeholder="e.g. Thank you — it was a pleasure working with you."></textarea>
             </div>
             <div class="field" style="margin-top:14px">
               <label>Authorized signature <span class="pro-tag">PRO</span></label>
@@ -1016,7 +1008,7 @@ body.is-modal .toast.show{transform:translate(-50%,0)}
             <div id="signTypedWrap" hidden style="margin-top:12px">
               <div class="field">
                 <label for="signName">Name to sign</label>
-                <input type="text" id="signName" data-bind="profile.signName" placeholder="Mira Chen" autocomplete="off">
+                <input type="text" id="signName" data-bind="profile.signName" placeholder="e.g. Mira Chen" autocomplete="off">
               </div>
               <div class="sig-preview" id="sigPreview">Mira Chen</div>
             </div>
@@ -1281,7 +1273,8 @@ body.is-modal .toast.show{transform:translate(-50%,0)}
   }
 
   /* ───────────── state ───────────── */
-  function sampleProfile() {
+  /* Old builds started with this example filled in. Kept only to find and remove it from saved drafts. */
+  function legacyProfile() {
     return {
       name: 'Mira Chen Studio',
       email: 'hello@mirachen.studio',
@@ -1290,19 +1283,11 @@ body.is-modal .toast.show{transform:translate(-50%,0)}
       logo: '',
       signMode: 'none',
       signName: 'Mira Chen',
-      signImage: '',
-      fmt: guessFmt(),
-      paper: guessPaper()
+      signImage: ''
     };
   }
-  function sampleDoc() {
+  function legacyDoc() {
     return {
-      status: 'paid',
-      number: 'RCPT-0001',
-      date: isoToday(),
-      currency: 'USD',
-      method: 'Bank transfer',
-      methodOther: '',
       reference: 'INV-0024',
       clientName: 'Northwind Studio',
       clientEmail: 'billing@northwind.studio',
@@ -1316,8 +1301,42 @@ body.is-modal .toast.show{transform:translate(-50%,0)}
       discountValue: 0,
       taxLabel: 'Tax',
       taxRate: 0,
-      paid: 705,
-      notes: 'Thank you — it was a pleasure working with you. Please keep this receipt for your records.',
+      notes: 'Thank you — it was a pleasure working with you. Please keep this receipt for your records.'
+    };
+  }
+  /* a new visitor starts with empty fields; grey hints inside each field show what goes there */
+  function guessCurrency() {
+    const l = (navigator.language || 'en-US').toLowerCase();
+    if (l === 'en-gb') return 'GBP';
+    if (l === 'en-ca' || l === 'fr-ca') return 'CAD';
+    if (l === 'en-au') return 'AUD';
+    if (/^ko/.test(l)) return 'KRW';
+    if (/^ja/.test(l)) return 'JPY';
+    if (/^(de|fr|es|it|nl|pt-pt|fi|el|sk|sl|et|lv|lt|ga|mt)/.test(l)) return 'EUR';
+    return 'USD';
+  }
+  function sampleProfile() {
+    return { name: '', email: '', address: '', taxId: '', logo: '', signMode: 'none', signName: '', signImage: '', fmt: guessFmt(), paper: guessPaper() };
+  }
+  function sampleDoc() {
+    return {
+      status: 'paid',
+      number: 'RCPT-0001',
+      date: isoToday(),
+      currency: guessCurrency(),
+      method: 'Bank transfer',
+      methodOther: '',
+      reference: '',
+      clientName: '',
+      clientEmail: '',
+      clientAddress: '',
+      items: [{ desc: '', qty: 1, rate: 0 }],
+      discountType: 'percent',
+      discountValue: 0,
+      taxLabel: 'Tax',
+      taxRate: 0,
+      paid: 0,
+      notes: '',
       template: 'classic',
       accent: '#1f6f5c'
     };
@@ -1457,7 +1476,7 @@ body.is-modal .toast.show{transform:translate(-50%,0)}
     const box = $('#items');
     box.innerHTML = docState.items.map((it, i) => (
       '<div class="item-row" data-row="' + i + '">' +
-        '<div class="it-desc"><input type="text" data-i="' + i + '" data-f="desc" value="' + esc(it.desc) + '" placeholder="Service or product" aria-label="Description ' + (i + 1) + '"></div>' +
+        '<div class="it-desc"><input type="text" data-i="' + i + '" data-f="desc" value="' + esc(it.desc) + '" placeholder="e.g. Logo design — 3 concepts" aria-label="Description ' + (i + 1) + '"></div>' +
         '<div class="it-qty"><label>Qty</label><input type="text" inputmode="decimal" data-i="' + i + '" data-f="qty" value="' + esc(trimNum(it.qty)) + '" aria-label="Quantity ' + (i + 1) + '"></div>' +
         '<div class="it-rate"><label>Rate</label><input type="text" inputmode="decimal" data-i="' + i + '" data-f="rate" value="' + esc(trimNum(it.rate)) + '" aria-label="Rate ' + (i + 1) + '"></div>' +
         '<div class="it-amt"><span class="it-lbl">Amount</span><span class="it-amt-val">' + money(rc(pos(it.qty) * rc(pos(it.rate)))) + '</span></div>' +
@@ -1506,7 +1525,6 @@ body.is-modal .toast.show{transform:translate(-50%,0)}
     $('#sumClient').textContent = clean(docState.clientName) || 'Add the client';
     $('#sumItems').textContent = docState.items.length + (docState.items.length === 1 ? ' item · ' : ' items · ') + money(c.total);
     $('#sumNotes').textContent = (clean(docState.notes) ? 'Thank-you note added' : 'No note') + ' · ' + (profile.signMode === 'none' ? 'No signature' : 'Signature on');
-    updateSampleBar();
   }
 
   /* design */
@@ -1631,7 +1649,7 @@ body.is-modal .toast.show{transform:translate(-50%,0)}
   /* ───────────── sample data ───────────── */
   /* example details that must never reach a real receipt by accident */
   function sampleLeft() {
-    const sp = sampleProfile(), sd = sampleDoc();
+    const sp = legacyProfile(), sd = legacyDoc();
     const left = [];
     const same = (a, b) => clean(a) !== '' && clean(a) === clean(b);
     if (same(profile.name, sp.name)) left.push(['business name', '[data-bind="profile.name"]']);
@@ -1648,20 +1666,17 @@ body.is-modal .toast.show{transform:translate(-50%,0)}
     if (profile.signMode === 'typed' && same(profile.signName, sp.signName)) left.push(['signature name', '[data-bind="profile.signName"]']);
     return left;
   }
-  function updateSampleBar() {
-    const bar = $('#sampleBar');
-    if (bar) bar.hidden = sampleLeft().length === 0;
-  }
-  function clearSample() {
-    const sp = sampleProfile(), sd = sampleDoc();
+  function clearSample(silent) {
+    const sp = legacyProfile(), sd = legacyDoc();
     ['name', 'email', 'taxId', 'address'].forEach(k => { if (clean(profile[k]) === clean(sp[k])) profile[k] = ''; });
     if (clean(profile.signName) === clean(sp.signName)) profile.signName = '';
-    ['clientName', 'clientEmail', 'clientAddress', 'reference'].forEach(k => { if (clean(docState[k]) === clean(sd[k])) docState[k] = ''; });
+    ['clientName', 'clientEmail', 'clientAddress', 'reference', 'notes'].forEach(k => { if (clean(docState[k]) === clean(sd[k])) docState[k] = ''; });
     const sampleDescs = sd.items.map(it => it.desc);
     docState.items = docState.items.filter(it => sampleDescs.indexOf(clean(it.desc)) === -1);
     if (!docState.items.length) docState.items = [{ desc: '', qty: 1, rate: 0 }];
     if (docState.status !== 'paid') docState.paid = 0;
     syncEditor(); renderSheet(); persist();
+    if (silent) return;
     toast('Sample details cleared — add your own.');
     focusField('[data-bind="profile.name"]');
   }
@@ -1678,7 +1693,7 @@ body.is-modal .toast.show{transform:translate(-50%,0)}
   /* returns [message, element to focus] for the first thing that would print a wrong or empty receipt */
   function exportProblem() {
     const left = sampleLeft();
-    if (left.length) return ['Sample details are still on the receipt (' + left.map(x => x[0]).join(', ') + '). Replace them or use “Clear sample details”.', left[0][1]];
+    if (left.length) return ['Example details are still on the receipt (' + left.map(x => x[0]).join(', ') + '). Replace them with yours first.', left[0][1]];
     const c = calc();
     if (!clean(profile.name)) return ['Add your business name first.', '[data-bind="profile.name"]'];
     if (!clean(docState.clientName)) return ['Add who paid you (client name) first.', '[data-bind="doc.clientName"]'];
@@ -2303,7 +2318,7 @@ body.is-modal .toast.show{transform:translate(-50%,0)}
     d.discountValue = pos(inv.discountValue);
     d.taxLabel = clean(inv.taxLabel) || 'Tax';
     d.taxRate = pos(inv.taxRate);
-    d.notes = clean(prev.notes) === clean(sampleDoc().notes) || !clean(prev.notes) ? 'Thank you for your payment.' : prev.notes;
+    d.notes = clean(prev.notes) === clean(legacyDoc().notes) || !clean(prev.notes) ? 'Thank you for your payment.' : prev.notes;
     d.template = prev.template; d.accent = prev.accent;
     useDoc(d);
     d.paid = calc().total;
@@ -2489,7 +2504,6 @@ body.is-modal .toast.show{transform:translate(-50%,0)}
 
     /* pro */
     $('#unlockBtn').addEventListener('click', () => openPro('upgrade'));
-    $('#clearSample').addEventListener('click', clearSample);
     $('#histBtn').addEventListener('click', openHistory);
     $('#importBtn').addEventListener('click', openImport);
     $('#histSaveBtn').addEventListener('click', () => saveCurrent(false));
@@ -2570,6 +2584,7 @@ body.is-modal .toast.show{transform:translate(-50%,0)}
     fit();
     setTimeout(fit, 120);
     setTimeout(fit, 600);
+    if (sampleLeft().length) clearSample(true);   /* drafts saved by older builds still hold the example */
     initLicense();
   }
 
