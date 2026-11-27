@@ -7,7 +7,7 @@
 - 작업 방식: 작업용 브랜치에서 고치고 시험한 뒤, 대표 확인을 받고 `main`에 합친다(사이트는 GitHub Pages main, 주소 https://seohn0228-jpg.github.io/swiftreceipt/ — 2026-11-27 공개).
 - 설정(스크립트 맨 위): `CHECKOUT_URL`(검로드 상품 주소, 비면 "곧 열려요"), `OWNER_CODE_HASHES`(대표 테스트 키의 SHA-256만 저장, **키 자체는 저장소에 절대 쓰지 않는다** — 공개 저장소).
 - 무료: 한 달 PDF 3장, 워터마크. 같은 영수증을 30분 안에 다시 뽑으면 세지 않음. Pro: 무제한, 디자인 3종, 로고·서명, 워터마크 없음, 저장한 영수증(최대 20, 내보내면 자동 저장)·열기·복제·백업/복원.
-- Pro 판단: 저장된 키를 시작할 때 다시 확인(저장된 pro:true는 무시). 검로드 라이선스 확인은 아직 없음(SwiftBill 방식으로 붙일 예정).
+- Pro 판단: 저장된 키를 시작할 때 다시 확인(저장된 pro:true는 무시). 검로드 라이선스(2026-11-27): 상품 SwiftReceipt Pro(id vLo6JYrowpBZ4_jcufsJpw==, https://swiftbill4.gumroad.com/l/receipt, 9달러). `GUMROAD_PRODUCT_IDS`에 묶음 상품 id를 더하면 묶음 키도 받음. 기기 3대(확인 뒤 +1), 방문 때마다(10분에 1번) 재확인, 환불·비활성 키는 Pro 끔, 서버·인터넷 오류는 마지막 확인 뒤 30일까지 유지.
 - SwiftBill 연동: 같은 사이트(seohn0228-jpg.github.io)라 SwiftBill 브라우저 저장 내용(`swiftbill.doc.v1`, `swiftbill.history.v1`, `swiftbill.profile.v1`)을 **읽기만** 해서 "Import from SwiftBill"(무료)로 인보이스를 영수증으로 만든다. SwiftBill 저장 형식을 바꾸면 이 기능도 확인한다.
 - 예시 데이터 보호: 예시 내용(세금번호·손님·품목 등)이 남아 있으면 출력을 막는다. 예시 값을 바꾸면 `sampleLeft()`도 같이 본다.
 - 서버 없는 한계(과장 금지): 코드 수정·시크릿 창·저장소 삭제로 무료 횟수·Pro를 완전히 막을 수 없음.
