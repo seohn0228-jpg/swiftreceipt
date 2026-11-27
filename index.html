@@ -195,6 +195,27 @@ input[type=date]{min-height:42px}
   background:#fff8e6;border:1px solid #f1dfae;border-radius:var(--radius-sm);padding:10px 14px;margin-bottom:12px;
   font-size:13px;color:#6b4f12;line-height:1.4}
 .sample-bar b{color:#4a360c}
+.tb-actions{display:flex;gap:8px;flex-wrap:wrap;margin-top:12px}
+.tb-actions .btn{min-height:40px}
+.tb-actions .pro-tag{margin-left:6px}
+.hist-list{display:grid;gap:8px;margin-top:16px;max-height:46vh;overflow-y:auto;overflow-x:hidden;grid-template-columns:minmax(0,1fr)}
+.hist-item{display:flex;align-items:center;gap:12px;min-width:0;padding:11px 12px;border:1px solid var(--line);border-radius:12px;background:#fff}
+.hist-item .hi-main{flex:1;min-width:0;display:flex;flex-direction:column;gap:2px}
+.hist-item .hi-main b{font-size:14px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.hist-item .hi-main span{font-size:12px;color:var(--muted)}
+.hist-item .hi-acts{display:flex;gap:6px;align-items:center;flex:none}
+.hist-item .icon-btn{width:36px;height:36px}
+.hist-list .empty{font-size:13px;color:var(--muted);padding:14px 2px}
+.hist-tools{display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-top:10px}
+.hist-tools .btn{min-height:44px;min-width:0;padding:0 8px;white-space:normal;line-height:1.2}
+.hist-msg{min-height:1.2em;margin:10px 2px 0;font-size:13px;color:var(--muted)}
+.hist-msg.ok{color:#027a48}.hist-msg.bad{color:var(--danger)}
+@media (max-width:480px){
+  .hist-item{flex-wrap:wrap}
+  .hist-item .hi-main{flex:1 1 100%}
+  .hist-item .hi-acts{width:100%;justify-content:flex-end}
+  .hist-item .hi-acts .btn{flex:1;min-width:0}
+}
 
 .btn{
   display:inline-flex;align-items:center;justify-content:center;gap:8px;
@@ -447,6 +468,7 @@ input[type=date]{min-height:42px}
 .s-statement b{font-weight:700;color:#1b1914;white-space:nowrap}
 
 .s-items{width:100%;border-collapse:collapse;margin-top:26px;table-layout:fixed}
+.sheet[data-paper="letter"]{width:816px;min-height:1056px}
 .s-items th:nth-child(2){width:9%}
 .s-items th:nth-child(3),.s-items th:nth-child(4){width:18%}
 .s-items th{
@@ -689,7 +711,7 @@ body.is-modal .toast.show{transform:translate(-50%,0)}
 }
 
 /* ---------- print ---------- */
-@page{size:A4;margin:14mm 15mm 18mm}
+@page{margin:14mm 15mm 18mm}
 @media print{
   html,body{background:#fff!important;margin:0!important;padding:0!important;height:auto!important;overflow:visible!important}
   body > *:not(#printRoot){display:none!important}
@@ -775,6 +797,10 @@ body.is-modal .toast.show{transform:translate(-50%,0)}
           </div>
         </div>
         <p class="tb-note" id="statusNote">Payment received in full — the balance is cleared automatically.</p>
+        <div class="tb-actions">
+          <button type="button" class="btn btn-ghost btn-sm" id="importBtn" hidden>Import from SwiftBill</button>
+          <button type="button" class="btn btn-ghost btn-sm" id="histBtn">Saved receipts<span class="pro-tag" id="histProTag">PRO</span></button>
+        </div>
       </div>
 
       <div class="editor">
@@ -943,6 +969,23 @@ body.is-modal .toast.show{transform:translate(-50%,0)}
                 <label>Accent colour</label>
                 <div class="swatch-row" id="swatchRow"></div>
               </div>
+              <div class="grid2">
+                <div class="field">
+                  <label for="fmt">Date &amp; number style</label>
+                  <select id="fmt" data-bind="profile.fmt">
+                    <option value="us">US · Nov 27, 2026 · 1,234.50</option>
+                    <option value="uk">UK · 27 Nov 2026 · 1,234.50</option>
+                    <option value="eu">EU · 27.11.2026 · 1.234,50</option>
+                  </select>
+                </div>
+                <div class="field">
+                  <label for="paper">Paper size</label>
+                  <select id="paper" data-bind="profile.paper">
+                    <option value="a4">A4</option>
+                    <option value="letter">US Letter</option>
+                  </select>
+                </div>
+              </div>
             </div>
           </div>
         </section>
@@ -1049,6 +1092,7 @@ body.is-modal .toast.show{transform:translate(-50%,0)}
       <li><svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"><path d="M20 6 9 17l-5-5"/></svg>All three templates — Classic, Minimal, Bold</li>
       <li><svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"><path d="M20 6 9 17l-5-5"/></svg>Your logo and authorized signature</li>
       <li><svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"><path d="M20 6 9 17l-5-5"/></svg>No watermark on any receipt</li>
+      <li><svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"><path d="M20 6 9 17l-5-5"/></svg>Saved receipts — reopen, duplicate, back up</li>
     </ul>
     <div class="price-row"><span class="price">$9</span><span class="price-note">once · yours forever · no account</span></div>
     <a class="btn btn-primary btn-block" href="#" id="buyBtn" target="_blank" rel="noopener">Get Pro — $9</a>
@@ -1062,6 +1106,33 @@ body.is-modal .toast.show{transform:translate(-50%,0)}
       </div>
       <p class="code-err" id="codeErr" role="status"></p>
     </div>
+  </div>
+</div>
+
+<!-- saved receipts modal -->
+<div class="modal-backdrop" id="histModal" hidden>
+  <div class="modal" role="dialog" aria-modal="true" aria-labelledby="histTitle">
+    <button type="button" class="modal-x" data-close aria-label="Close">&#215;</button>
+    <h2 id="histTitle">Saved receipts</h2>
+    <p class="sub">Every receipt you export is saved here automatically — newest first, up to 20, in this browser only. Clearing your browser data deletes them, so back up now and then.</p>
+    <div class="hist-list" id="histList"></div>
+    <button type="button" class="btn btn-soft btn-block" id="histSaveBtn" style="margin-top:14px">Save current receipt</button>
+    <div class="hist-tools">
+      <button type="button" class="btn btn-ghost" id="backupBtn">Back up (.json)</button>
+      <button type="button" class="btn btn-ghost" id="restoreBtn">Restore backup</button>
+      <input type="file" id="restoreInput" accept="application/json,.json" hidden>
+    </div>
+    <p class="hist-msg" id="histMsg" role="status" aria-live="polite"></p>
+  </div>
+</div>
+
+<!-- import from SwiftBill modal -->
+<div class="modal-backdrop" id="importModal" hidden>
+  <div class="modal" role="dialog" aria-modal="true" aria-labelledby="importTitle">
+    <button type="button" class="modal-x" data-close aria-label="Close">&#215;</button>
+    <h2 id="importTitle">Got paid? Turn the invoice into a receipt</h2>
+    <p class="sub">Pick an invoice from SwiftBill in this browser. Your business details, the client, items, tax and currency are copied over, and the invoice number becomes the receipt’s reference.</p>
+    <div class="hist-list" id="importList"></div>
   </div>
 </div>
 
@@ -1086,6 +1157,11 @@ body.is-modal .toast.show{transform:translate(-50%,0)}
   const K_FLAGS = 'swiftreceipt.flags.v1';
   const K_PROFILE = 'swiftreceipt.profile.v1';
   const K_DOC = 'swiftreceipt.doc.v1';
+  const K_HIST = 'swiftreceipt.history.v1';
+  const MAX_SAVED = 20;
+  /* SwiftBill lives on the same site (seohn0228-jpg.github.io), so its browser storage can be read here */
+  const SB_DOC = 'swiftbill.doc.v1', SB_HIST = 'swiftbill.history.v1', SB_PROFILE = 'swiftbill.profile.v1';
+  const FORMATS = { us: 'en-US', uk: 'en-GB', eu: 'de-DE' };
   const BASE_TITLE = 'SwiftReceipt — Payment Receipt Maker for Freelancers';
 
   const CURRENCIES = {
@@ -1161,11 +1237,28 @@ body.is-modal .toast.show{transform:translate(-50%,0)}
     const d = new Date();
     return d.getFullYear() + '-' + String(d.getMonth() + 1).padStart(2, '0');
   }
+  /* reader's conventions: guessed from the browser language, changeable under Design */
+  function guessFmt() {
+    const l = (navigator.language || 'en-US').toLowerCase();
+    if (l === 'en-us' || l === 'en-ca' || l === 'en-ph') return 'us';
+    if (/^en/.test(l)) return 'uk';
+    if (/^(de|fr|es|it|nl|pt|pl|da|sv|nb|no|fi|cs|sk|sl|hr|ro|hu|el|tr|ru|uk|id|vi)/.test(l)) return 'eu';
+    return 'uk';
+  }
+  function guessPaper() {
+    const l = (navigator.language || '').toLowerCase();
+    return /^(en-us|en-ca|es-mx|en-ph|es-us)$/.test(l) ? 'letter' : 'a4';
+  }
+  const curFmt = () => FORMATS[profile.fmt] ? profile.fmt : 'uk';
   function fmtDate(s) {
-    const d = s ? new Date(s + 'T00:00:00') : new Date();
+    const d = s instanceof Date ? s : (s ? new Date(s + 'T00:00:00') : new Date());
     const v = isNaN(d.getTime()) ? new Date() : d;
+    const f = curFmt();
+    if (f === 'us') return v.toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' });
+    if (f === 'eu') return String(v.getDate()).padStart(2, '0') + '.' + String(v.getMonth() + 1).padStart(2, '0') + '.' + v.getFullYear();
     return v.toLocaleDateString('en-GB', { day: '2-digit', month: 'short', year: 'numeric' });
   }
+  function uid() { return Date.now().toString(36) + Math.random().toString(36).slice(2, 6); }
   function trimNum(n) {
     const v = num(n);
     return v % 1 === 0 ? String(v) : String(r2(v));
@@ -1181,7 +1274,9 @@ body.is-modal .toast.show{transform:translate(-50%,0)}
       logo: '',
       signMode: 'none',
       signName: 'Mira Chen',
-      signImage: ''
+      signImage: '',
+      fmt: guessFmt(),
+      paper: guessPaper()
     };
   }
   function sampleDoc() {
@@ -1217,6 +1312,8 @@ body.is-modal .toast.show{transform:translate(-50%,0)}
   if (!flags.exports || typeof flags.exports !== 'object') flags.exports = { month: '', count: 0 };
   let profile = Object.assign(sampleProfile(), load(K_PROFILE, {}));
   let docState = Object.assign(sampleDoc(), load(K_DOC, {}));
+  let savedDocs = load(K_HIST, []);
+  if (!Array.isArray(savedDocs)) savedDocs = [];
   if (!Array.isArray(docState.items) || !docState.items.length) docState.items = [{ desc: '', qty: 1, rate: 0 }];
   if (!docState.date) docState.date = isoToday();
 
@@ -1237,9 +1334,10 @@ body.is-modal .toast.show{transform:translate(-50%,0)}
   /* ───────────── money & math ───────────── */
   function money(n, cur, signed) {
     const c = CURRENCIES[cur || docState.currency] || CURRENCIES.USD;
-    const v = Math.abs(n).toLocaleString('en-US', { minimumFractionDigits: c.dec, maximumFractionDigits: c.dec });
+    const f = curFmt();
+    const v = Math.abs(n).toLocaleString(FORMATS[f], { minimumFractionDigits: c.dec, maximumFractionDigits: c.dec });
     const sign = signed && n < 0 ? '−' : '';
-    return sign + c.symbol + v;
+    return f === 'eu' ? sign + v + ' ' + c.symbol : sign + c.symbol + v;   /* EU style: 1.234,50 € */
   }
   /* round to what the currency can show (whole won / yen, cents elsewhere) so printed lines always add up */
   function rc(n) {
@@ -1423,7 +1521,7 @@ body.is-modal .toast.show{transform:translate(-50%,0)}
     if (!isPro() && docState.template !== 'classic') docState.template = 'classic';
     $$('#tplGrid [data-tpl]').forEach(b => b.setAttribute('aria-pressed', String(b.dataset.tpl === docState.template)));
     $$('#swatchRow [data-accent]').forEach(b => b.setAttribute('aria-pressed', String(b.dataset.accent === docState.accent)));
-    $('#tplChip').textContent = 'A4 · ' + (TEMPLATES[docState.template] || 'Classic');
+    $('#tplChip').textContent = (profile.paper === 'letter' ? 'Letter' : 'A4') + ' · ' + (TEMPLATES[docState.template] || 'Classic');
     const accentName = (ACCENTS.find(a => a.hex === docState.accent) || {}).name || 'Custom';
     $('#sumDesign').textContent = (TEMPLATES[docState.template] || 'Classic') + ' · ' + accentName;
   }
@@ -1487,6 +1585,31 @@ body.is-modal .toast.show{transform:translate(-50%,0)}
     };
     reader.onerror = () => toast('That file could not be read.');
     reader.readAsDataURL(file);
+  }
+
+  /* RCPT-0007 -> RCPT-0008: keeps prefix and zero padding and skips numbers already saved */
+  function bumpNumber(n) {
+    const m = String(n || '').match(/^(.*?)(\d+)(\D*)$/);
+    if (!m) return (String(n || '').trim() ? String(n).trim() + '-' : 'RCPT-') + '0001';
+    return m[1] + String(parseInt(m[2], 10) + 1).padStart(m[2].length, '0') + m[3];
+  }
+  function nextNumber(current) {
+    const cur = String(current || '').trim();
+    const used = new Set(savedDocs.map(d => d.doc && String(d.doc.number || '').trim()).filter(Boolean));
+    used.add(cur);
+    const m = cur.match(/^(.*?)(\d+)(\D*)$/);
+    let cand;
+    if (m) {
+      let max = parseInt(m[2], 10), width = m[2].length;
+      used.forEach(n => {
+        const k = n.match(/^(.*?)(\d+)(\D*)$/);
+        if (k && k[1] === m[1] && k[3] === m[3]) { max = Math.max(max, parseInt(k[2], 10)); width = Math.max(width, k[2].length); }
+      });
+      cand = m[1] + String(max + 1).padStart(width, '0') + m[3];
+    } else cand = bumpNumber(cur);
+    let guard = 0;
+    while (used.has(cand) && guard++ < 10000) cand = bumpNumber(cand);
+    return cand;
   }
 
   /* ───────────── sample data ───────────── */
@@ -1585,6 +1708,7 @@ body.is-modal .toast.show{transform:translate(-50%,0)}
     const cur = docState.currency;
     const tpl = (!isPro() && docState.template !== 'classic') ? 'classic' : docState.template;
     sheet.dataset.tpl = tpl;
+    sheet.dataset.paper = profile.paper === 'letter' ? 'letter' : 'a4';
     sheet.style.setProperty('--accent', docState.accent || '#1f6f5c');
 
     const bizMeta = [];
@@ -1699,7 +1823,7 @@ body.is-modal .toast.show{transform:translate(-50%,0)}
     if (!stage || !sheet || !wrap) return;
     const pad = parseFloat(getComputedStyle(stage).paddingLeft) + parseFloat(getComputedStyle(stage).paddingRight);
     const avail = Math.max(120, stage.clientWidth - pad);
-    const w = 794;
+    const w = sheet.offsetWidth || 794;
     let s = Math.min(1, avail / w);
     /* On the desktop panel the stage has a fixed height: shrink a little further so
        the whole A4 receipt is visible without scrolling inside the panel. */
@@ -1719,6 +1843,8 @@ body.is-modal .toast.show{transform:translate(-50%,0)}
 
   /* ───────────── chrome ───────────── */
   function updateChrome() {
+    $('#histProTag').hidden = isPro();
+    $('#importBtn').hidden = !swiftBillInvoices().length;
     const pill = $('#statusPill');
     const btn = $('#unlockBtn');
     if (isPro()) {
@@ -1759,17 +1885,19 @@ body.is-modal .toast.show{transform:translate(-50%,0)}
       return b.some(x => /Chromium/.test(x.brand) && parseInt(x.version, 10) >= 131);
     } catch (e) { return false; }
   })();
-  function setPageWatermark(on) {
+  function setPageCss(wm) {
     let st = $('#wmPageStyle');
     if (!st) { st = document.createElement('style'); st.id = 'wmPageStyle'; document.head.appendChild(st); }
-    st.textContent = on
-      ? '@page{@bottom-center{content:"Made with SwiftReceipt \\2014  free version";font-family:' + 'Arial,sans-serif;font-size:8.5px;letter-spacing:.05em;color:#b9b3a5}}'
-      : '';
-    document.body.classList.toggle('wm-pages', on);
+    st.textContent = '@page{size:' + (profile.paper === 'letter' ? 'letter' : 'A4') + ';'
+      + (wm ? '@bottom-center{content:"Made with SwiftReceipt \\2014  free version";font-family:Arial,sans-serif;font-size:8.5px;letter-spacing:.05em;color:#b9b3a5}' : '')
+      + '}';
+    document.body.classList.toggle('wm-pages', wm);
   }
   function doPrint() {
+    docState.exportedNo = clean(docState.number);   /* this number is now used */
+    schedulePersist();
     renderSheet();
-    setPageWatermark(!isPro() && MARGIN_BOXES);
+    setPageCss(!isPro() && MARGIN_BOXES);
     const root = $('#printRoot');
     const sheet = $('#sheet');
     const node = sheet.cloneNode(true);
@@ -1781,11 +1909,12 @@ body.is-modal .toast.show{transform:translate(-50%,0)}
     window.print();
     titleTimer = setTimeout(restoreTitle, 5000);
   }
-  window.addEventListener('afterprint', () => { restoreTitle(); $('#printRoot').innerHTML = ''; setPageWatermark(false); });
+  window.addEventListener('afterprint', () => { restoreTitle(); $('#printRoot').innerHTML = ''; setPageCss(false); });
 
   /* fingerprint of what is on the receipt right now */
   function docKey() {
-    const t = JSON.stringify([docState, profile.name, profile.email, profile.address, profile.taxId, profile.logo.length, profile.signMode, profile.signName]);
+    const d = Object.assign({}, docState); delete d.exportedNo;   /* bookkeeping, not receipt content */
+    const t = JSON.stringify([d, profile.name, profile.email, profile.address, profile.taxId, profile.logo.length, profile.signMode, profile.signName]);
     let h = 5381;
     for (let i = 0; i < t.length; i++) h = ((h * 33) ^ t.charCodeAt(i)) >>> 0;
     return h.toString(36) + '.' + t.length;
@@ -1795,7 +1924,8 @@ body.is-modal .toast.show{transform:translate(-50%,0)}
     if (prob) { toast(prob[0]); focusField(prob[1]); return; }   /* nothing is counted */
     if (isPro()) {
       doPrint();
-      toast('Choose “Save as PDF” in the print dialog.');
+      saveCurrent(true);
+      toast('Saved to your receipts. Choose “Save as PDF” in the print dialog.');
       return;
     }
     updateChrome();
@@ -1829,7 +1959,8 @@ body.is-modal .toast.show{transform:translate(-50%,0)}
     upgrade: 'Unlimited receipts, all three layouts, your logo and signature — no subscription.',
     limit: 'You’ve used all 3 free PDFs this month. They reset on the 1st — or unlock unlimited exports now.',
     templates: 'Minimal and Bold layouts are part of Pro. Classic stays free forever.',
-    branding: 'Your logo and signature are part of Pro — the details that make a receipt look official.'
+    branding: 'Your logo and signature are part of Pro — the details that make a receipt look official.',
+    saved: 'Saved receipts are part of Pro — every receipt you export is kept, ready to reopen, duplicate or back up.'
   };
   function openPro(reason) {
     if (reason && REASONS[reason]) $('#proReason').textContent = REASONS[reason];
@@ -1883,6 +2014,214 @@ body.is-modal .toast.show{transform:translate(-50%,0)}
     if (flags.license || flags.src) { flags.license = ''; flags.src = ''; save(K_FLAGS, flags); }
   }
 
+  function openModal(id) {
+    lastFocus = document.activeElement;
+    $('#' + id).hidden = false;
+    document.body.classList.add('is-modal');
+  }
+
+  /* ───────────── saved receipts (Pro) ───────────── */
+  function labelFor(d) {
+    return (clean(d.clientName) || 'Untitled') + (clean(d.number) ? ' · ' + clean(d.number) : '');
+  }
+  function saveCurrent(silent) {
+    if (!isPro()) { openPro('saved'); return; }
+    const c = calc();
+    const no = clean(docState.number);
+    const prev = no ? savedDocs.find(d => d.doc && clean(d.doc.number) === no) : null;
+    const entry = { id: prev ? prev.id : uid(), savedAt: Date.now(), label: labelFor(docState), total: c.paid, currency: docState.currency, status: docState.status, doc: clone(docState) };
+    const before = savedDocs;
+    savedDocs = [entry].concat(savedDocs.filter(d => d !== prev));
+    const dropped = savedDocs.length > MAX_SAVED;
+    savedDocs = savedDocs.slice(0, MAX_SAVED);
+    if (!save(K_HIST, savedDocs)) { savedDocs = before; toast('Couldn’t save — this browser is out of storage space.'); return; }
+    renderHistory();
+    if (!silent) toast(prev ? 'Updated saved ' + no + '.' : (dropped ? 'Saved. The oldest saved receipt was removed (limit ' + MAX_SAVED + ').' : 'Saved to this browser.'));
+  }
+  function renderHistory() {
+    const box = $('#histList');
+    if (!box) return;
+    if (!savedDocs.length) {
+      box.innerHTML = '<p class="empty">Nothing saved yet. Receipts you export are saved here automatically.</p>';
+      return;
+    }
+    box.innerHTML = savedDocs.map(d => {
+      const st = (STATUS[d.status] || STATUS.paid).short;
+      return '<div class="hist-item">' +
+        '<div class="hi-main"><b>' + esc(d.label) + '</b><span>' + fmtDate(new Date(d.savedAt)) + ' · ' + esc(st) + ' · ' + money(d.total, d.currency) + '</span></div>' +
+        '<div class="hi-acts">' +
+          '<button type="button" class="btn btn-ghost btn-sm" data-load="' + esc(d.id) + '">Open</button>' +
+          '<button type="button" class="btn btn-ghost btn-sm" data-dup="' + esc(d.id) + '" aria-label="Duplicate ' + esc(d.label) + '">Duplicate</button>' +
+          '<button type="button" class="icon-btn" data-remove="' + esc(d.id) + '" aria-label="Delete saved receipt ' + esc(d.label) + '">&#215;</button>' +
+        '</div></div>';
+    }).join('');
+  }
+  function histMsg(text, kind) {
+    const el = $('#histMsg'); if (!el) return;
+    el.textContent = text; el.className = 'hist-msg' + (kind ? ' ' + kind : '');
+  }
+  function openHistory() {
+    if (!isPro()) { openPro('saved'); return; }
+    renderHistory(); histMsg('', '');
+    openModal('histModal');
+  }
+  function useDoc(d) {
+    docState = Object.assign(sampleDoc(), d);
+    if (!Array.isArray(docState.items) || !docState.items.length) docState.items = [{ desc: '', qty: 1, rate: 0 }];
+    syncEditor(); renderSheet(); persist(); closeModals();
+  }
+  function cleanDoc(d) {
+    if (!d || typeof d !== 'object' || Array.isArray(d) || !Array.isArray(d.items)) return null;
+    const out = sampleDoc();
+    ['status', 'number', 'date', 'currency', 'method', 'methodOther', 'reference', 'clientName', 'clientEmail', 'clientAddress', 'discountType', 'taxLabel', 'notes', 'template', 'accent']
+      .forEach(k => { if (d[k] != null && typeof d[k] !== 'object') out[k] = String(d[k]).slice(0, 4000); });
+    ['taxRate', 'discountValue', 'paid'].forEach(k => { if (d[k] != null) out[k] = pos(d[k]); });
+    if (!STATUS[out.status]) out.status = 'paid';
+    if (!CURRENCIES[out.currency]) out.currency = 'USD';
+    if (!TEMPLATES[out.template]) out.template = 'classic';
+    if (!/^#[0-9a-f]{6}$/i.test(out.accent)) out.accent = '#1f6f5c';
+    if (!/^\d{4}-\d{2}-\d{2}$/.test(out.date)) out.date = isoToday();
+    out.items = d.items.slice(0, 500).filter(it => it && typeof it === 'object')
+      .map(it => ({ desc: String(it.desc == null ? '' : it.desc).slice(0, 1000), qty: pos(it.qty), rate: pos(it.rate) }));
+    if (!out.items.length) out.items = [{ desc: '', qty: 1, rate: 0 }];
+    return out;
+  }
+  function cleanImage(v) { return (typeof v === 'string' && /^data:image\/(png|jpe?g|webp);base64,[A-Za-z0-9+/=]+$/.test(v) && v.length < 3000000) ? v : ''; }
+  function exportBackup() {
+    if (!isPro()) { openPro('saved'); return; }
+    const data = { app: 'swiftreceipt', type: 'backup', version: 1, exportedAt: new Date().toISOString(), profile: clone(profile), current: clone(docState), receipts: clone(savedDocs) };
+    try {
+      const url = URL.createObjectURL(new Blob([JSON.stringify(data, null, 1)], { type: 'application/json' }));
+      const a = document.createElement('a');
+      a.href = url; a.download = 'swiftreceipt-backup-' + isoToday() + '.json';
+      document.body.appendChild(a); a.click(); a.remove();
+      setTimeout(() => URL.revokeObjectURL(url), 4000);
+      histMsg('Backup created: ' + savedDocs.length + ' saved receipt' + (savedDocs.length === 1 ? '' : 's') + ' and your business details. Keep the file somewhere safe.', 'ok');
+    } catch (e) { histMsg('Couldn’t create the backup file in this browser.', 'bad'); }
+  }
+  function restoreBackup(file) {
+    if (!isPro()) { openPro('saved'); return; }
+    if (!file) return;
+    if (file.size > 15 * 1024 * 1024) { histMsg('That file is too large to be a SwiftReceipt backup.', 'bad'); return; }
+    const reader = new FileReader();
+    reader.onerror = () => histMsg('Couldn’t read that file.', 'bad');
+    reader.onload = () => {
+      let data;
+      try { data = JSON.parse(String(reader.result || '')); } catch (e) { histMsg('That file isn’t a SwiftReceipt backup.', 'bad'); return; }
+      if (!data || data.app !== 'swiftreceipt' || data.type !== 'backup' || !Array.isArray(data.receipts)) { histMsg('That file isn’t a SwiftReceipt backup.', 'bad'); return; }
+      if (data.version !== 1) { histMsg('This backup was made by a newer version of SwiftReceipt. Reload the page and try again.', 'bad'); return; }
+      const incoming = [];
+      data.receipts.forEach(x => {
+        const doc = x && cleanDoc(x.doc);
+        if (!doc) return;
+        const keep = docState; docState = doc; const c = calc(); docState = keep;
+        incoming.push({ id: (x.id && /^[a-z0-9]{4,40}$/i.test(String(x.id))) ? String(x.id) : uid(), savedAt: +x.savedAt || Date.now(), label: labelFor(doc), total: c.paid, currency: doc.currency, status: doc.status, doc: doc });
+      });
+      const hasProfile = data.profile && typeof data.profile === 'object';
+      if (!incoming.length && !hasProfile) { histMsg('This backup has no receipts to restore.', 'bad'); return; }
+      const ids = new Set(savedDocs.map(d => d.id));
+      const replaced = incoming.filter(d => ids.has(d.id)).length;
+      const added = incoming.length - replaced;
+      const msg = 'Restore this backup?\n\n• ' + added + ' receipt' + (added === 1 ? '' : 's') + ' will be added\n• ' + replaced + ' saved receipt' + (replaced === 1 ? '' : 's') + ' with the same ID will be replaced\n' +
+        (hasProfile ? '• Your business details, logo and signature will be replaced\n' : '') + '• Only the newest ' + MAX_SAVED + ' receipts are kept\n\nThe receipt in the editor is not changed.';
+      if (!confirm(msg)) { histMsg('Restore cancelled. Nothing was changed.', ''); return; }
+      const beforeDocs = savedDocs, beforeProfile = clone(profile);
+      const map = new Map(savedDocs.map(d => [d.id, d]));
+      incoming.forEach(d => map.set(d.id, d));
+      savedDocs = Array.from(map.values()).sort((a, b) => (b.savedAt || 0) - (a.savedAt || 0)).slice(0, MAX_SAVED);
+      if (hasProfile) {
+        const pf = data.profile;
+        ['name', 'email', 'address', 'taxId', 'signName'].forEach(k => { profile[k] = pf[k] == null ? '' : String(pf[k]).slice(0, 2000); });
+        if (['none', 'typed', 'upload'].indexOf(pf.signMode) !== -1) profile.signMode = pf.signMode;
+        if (FORMATS[pf.fmt]) profile.fmt = pf.fmt;
+        if (pf.paper === 'a4' || pf.paper === 'letter') profile.paper = pf.paper;
+        profile.logo = cleanImage(pf.logo); profile.signImage = cleanImage(pf.signImage);
+      }
+      if (!save(K_HIST, savedDocs) || !save(K_PROFILE, profile)) {
+        savedDocs = beforeDocs; profile = beforeProfile; save(K_HIST, savedDocs); save(K_PROFILE, profile);
+        histMsg('Couldn’t restore — this browser is out of storage space. Nothing was changed.', 'bad'); return;
+      }
+      syncEditor(); renderSheet(); renderHistory();
+      histMsg('Restored ' + incoming.length + ' receipt' + (incoming.length === 1 ? '' : 's') + (hasProfile ? ' and your business details' : '') + '.', 'ok');
+    };
+    reader.readAsText(file);
+  }
+
+  /* ───────────── import from SwiftBill (free) ───────────── */
+  function swiftBillInvoices() {
+    const list = [];
+    const seen = new Set();
+    const add = (doc, when, label) => {
+      if (!doc || typeof doc !== 'object' || !Array.isArray(doc.items)) return;
+      if (doc.type === 'quote') return;                                  /* quotes aren't payments */
+      if (!clean(doc.clientName) && !doc.items.some(it => it && pos(it.rate) > 0)) return;   /* empty draft */
+      const key = clean(doc.number) + '|' + clean(doc.clientName);
+      if (seen.has(key)) return;
+      seen.add(key);
+      list.push({ doc: doc, when: when, label: label });
+    };
+    let hist = [];
+    try { hist = JSON.parse(localStorage.getItem(SB_HIST) || '[]'); } catch (e) {}
+    let cur = null;
+    try { cur = JSON.parse(localStorage.getItem(SB_DOC) || 'null'); } catch (e) {}
+    if (cur) add(cur, 0, 'Open in SwiftBill now');
+    if (Array.isArray(hist)) hist.forEach(h => { if (h && h.doc) add(h.doc, +h.savedAt || 0, 'Saved ' + fmtDate(new Date(+h.savedAt || Date.now()))); });
+    return list.slice(0, 30);
+  }
+  function sbTotal(doc) {
+    const keep = docState;
+    docState = Object.assign(sampleDoc(), { items: doc.items, currency: CURRENCIES[doc.currency] ? doc.currency : 'USD', discountType: doc.discountType, discountValue: doc.discountValue, taxRate: doc.taxRate, status: 'paid' });
+    const c = calc();
+    docState = keep;
+    return c.total;
+  }
+  function openImport() {
+    const list = swiftBillInvoices();
+    if (!list.length) { toast('No SwiftBill invoices found in this browser.'); return; }
+    $('#importList').innerHTML = list.map((x, i) =>
+      '<div class="hist-item"><div class="hi-main"><b>' + esc(labelFor(x.doc)) + '</b><span>' + esc(x.label) + ' · ' + money(sbTotal(x.doc), CURRENCIES[x.doc.currency] ? x.doc.currency : 'USD') + '</span></div>' +
+      '<div class="hi-acts"><button type="button" class="btn btn-primary btn-sm" data-import="' + i + '">Use</button></div></div>'
+    ).join('');
+    $('#importList').dataset.count = String(list.length);
+    openModal('importModal');
+  }
+  function importInvoice(i) {
+    const x = swiftBillInvoices()[i];
+    if (!x) return;
+    const inv = x.doc;
+    let sbp = null;
+    try { sbp = JSON.parse(localStorage.getItem(SB_PROFILE) || 'null'); } catch (e) {}
+    if (sbp && typeof sbp === 'object' && clean(sbp.name)) {
+      ['name', 'email', 'address', 'taxId'].forEach(k => { profile[k] = sbp[k] == null ? '' : String(sbp[k]).slice(0, 2000); });
+      if (FORMATS[sbp.fmt]) profile.fmt = sbp.fmt;
+      if (sbp.paper === 'a4' || sbp.paper === 'letter') profile.paper = sbp.paper;
+      if (isPro() && !profile.logo && cleanImage(sbp.logo)) profile.logo = cleanImage(sbp.logo);
+    }
+    const prev = docState;
+    const d = sampleDoc();
+    /* keep the current number unless it was already exported or saved */
+    const usedNo = clean(prev.number) && (prev.exportedNo === clean(prev.number) || savedDocs.some(x => x.doc && clean(x.doc.number) === clean(prev.number)));
+    d.number = clean(prev.number) && !usedNo ? clean(prev.number) : nextNumber(prev.number);
+    d.date = isoToday();
+    d.status = 'paid';
+    d.currency = CURRENCIES[inv.currency] ? inv.currency : prev.currency;
+    d.method = prev.method; d.methodOther = prev.methodOther;
+    d.reference = clean(inv.number);
+    d.clientName = String(inv.clientName || ''); d.clientEmail = String(inv.clientEmail || ''); d.clientAddress = String(inv.clientAddress || '');
+    d.items = inv.items.filter(it => it && typeof it === 'object').map(it => ({ desc: String(it.desc == null ? '' : it.desc), qty: pos(it.qty), rate: pos(it.rate) }));
+    if (!d.items.length) d.items = [{ desc: '', qty: 1, rate: 0 }];
+    d.discountType = inv.discountType === 'fixed' ? 'fixed' : 'percent';
+    d.discountValue = pos(inv.discountValue);
+    d.taxLabel = clean(inv.taxLabel) || 'Tax';
+    d.taxRate = pos(inv.taxRate);
+    d.notes = clean(prev.notes) === clean(sampleDoc().notes) || !clean(prev.notes) ? 'Thank you for your payment.' : prev.notes;
+    d.template = prev.template; d.accent = prev.accent;
+    useDoc(d);
+    d.paid = calc().total;
+    persist();
+    toast('Receipt filled from ' + (clean(inv.number) || 'your invoice') + '. Check the payment date and method, then export.');
+  }
+
   /* ───────────── toast ───────────── */
   let toastTimer = null;
   function toast(msg) {
@@ -1915,6 +2254,8 @@ body.is-modal .toast.show{transform:translate(-50%,0)}
         const obj = root === 'doc' ? docState : profile;
         obj[key] = el.value;
         if (key === 'signName') updateSignUI();
+        if (key === 'fmt' || key === 'currency') renderItems();
+        if (key === 'fmt' || key === 'paper') { updateDesign(); requestAnimationFrame(fit); }
         renderSheet();
         renderTotals();
         schedulePersist();
@@ -2060,6 +2401,35 @@ body.is-modal .toast.show{transform:translate(-50%,0)}
     /* pro */
     $('#unlockBtn').addEventListener('click', () => openPro('upgrade'));
     $('#clearSample').addEventListener('click', clearSample);
+    $('#histBtn').addEventListener('click', openHistory);
+    $('#importBtn').addEventListener('click', openImport);
+    $('#histSaveBtn').addEventListener('click', () => saveCurrent(false));
+    $('#backupBtn').addEventListener('click', exportBackup);
+    $('#restoreBtn').addEventListener('click', () => { if (!isPro()) { openPro('saved'); return; } $('#restoreInput').click(); });
+    $('#restoreInput').addEventListener('change', e => { const f = e.target.files && e.target.files[0]; e.target.value = ''; restoreBackup(f); });
+    $('#importList').addEventListener('click', e => { const b = e.target.closest('[data-import]'); if (b) importInvoice(parseInt(b.dataset.import, 10)); });
+    $('#histList').addEventListener('click', e => {
+      const dup = e.target.closest('[data-dup]'), ld = e.target.closest('[data-load]'), rm = e.target.closest('[data-remove]');
+      if (dup) {
+        const hit = savedDocs.find(d => d.id === dup.dataset.dup); if (!hit) return;
+        const copy = clone(hit.doc);
+        copy.number = nextNumber(copy.number || docState.number);
+        copy.date = isoToday();
+        useDoc(copy);
+        toast('Duplicated as ' + copy.number + ', dated today.');
+      } else if (ld) {
+        const hit = savedDocs.find(d => d.id === ld.dataset.load); if (!hit) return;
+        useDoc(clone(hit.doc));
+        toast('Receipt ' + (clean(hit.doc.number) || '') + ' opened.');
+      } else if (rm) {
+        const hit = savedDocs.find(d => d.id === rm.dataset.remove); if (!hit) return;
+        if (!confirm('Delete the saved receipt “' + hit.label + '”? This can’t be undone.')) return;
+        savedDocs = savedDocs.filter(d => d !== hit);
+        save(K_HIST, savedDocs); renderHistory();
+      }
+    });
+    /* SwiftBill may be open in another tab — refresh the import button when its data changes */
+    window.addEventListener('storage', e => { if (!e.key || e.key.indexOf('swiftbill.') === 0) updateChrome(); });
     $$('[data-close]').forEach(b => b.addEventListener('click', closeModals));
     $$('.modal-backdrop').forEach(b => b.addEventListener('click', e => { if (e.target === b) closeModals(); }));
     document.addEventListener('keydown', e => { if (e.key === 'Escape') closeModals(); });
@@ -2075,7 +2445,7 @@ body.is-modal .toast.show{transform:translate(-50%,0)}
       const prev = docState;
       docState = sampleDoc();
       const m = /^(.*?)(\d+)$/.exec(clean(prev.number));
-      docState.number = m ? m[1] + String(parseInt(m[2], 10) + 1).padStart(m[2].length, '0') : 'RCPT-0001';
+      docState.number = m ? nextNumber(prev.number) : 'RCPT-0001';
       /* keep the user's own settings, clear everything about the last client */
       ['currency', 'method', 'methodOther', 'discountType', 'taxLabel', 'taxRate', 'template', 'accent'].forEach(k => { if (prev[k] != null) docState[k] = prev[k]; });
       docState.reference = '';
