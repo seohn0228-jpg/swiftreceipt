@@ -191,6 +191,10 @@ select{
 input[type=date]{min-height:42px}
 .hint{font-size:11px;color:var(--faint);line-height:1.35}
 .hint.is-warn{color:var(--danger)}
+.sample-bar{display:flex;align-items:center;justify-content:space-between;gap:12px;flex-wrap:wrap;
+  background:#fff8e6;border:1px solid #f1dfae;border-radius:var(--radius-sm);padding:10px 14px;margin-bottom:12px;
+  font-size:13px;color:#6b4f12;line-height:1.4}
+.sample-bar b{color:#4a360c}
 
 .btn{
   display:inline-flex;align-items:center;justify-content:center;gap:8px;
@@ -443,6 +447,8 @@ input[type=date]{min-height:42px}
 .s-statement b{font-weight:700;color:#1b1914;white-space:nowrap}
 
 .s-items{width:100%;border-collapse:collapse;margin-top:26px;table-layout:fixed}
+.s-items th:nth-child(2){width:9%}
+.s-items th:nth-child(3),.s-items th:nth-child(4){width:18%}
 .s-items th{
   font-size:8.5px;font-weight:700;letter-spacing:.11em;text-transform:uppercase;color:#9c978b;
   text-align:left;padding:0 0 10px;border-bottom:1px solid #e2ddd1;vertical-align:bottom;
@@ -772,6 +778,10 @@ body.is-modal .toast.show{transform:translate(-50%,0)}
       </div>
 
       <div class="editor">
+        <div class="sample-bar" id="sampleBar" hidden>
+          <span><b>This is a sample receipt.</b> Replace the example details with yours — or clear them all at once.</span>
+          <button type="button" class="btn btn-ghost btn-sm" id="clearSample">Clear sample details</button>
+        </div>
 
         <!-- ── business ──────────────────────────────────────── -->
         <section class="card acc open" id="sec-biz">
@@ -1382,6 +1392,7 @@ body.is-modal .toast.show{transform:translate(-50%,0)}
     $('#sumClient').textContent = clean(docState.clientName) || 'Add the client';
     $('#sumItems').textContent = docState.items.length + (docState.items.length === 1 ? ' item · ' : ' items · ') + money(c.total);
     $('#sumNotes').textContent = (clean(docState.notes) ? 'Thank-you note added' : 'No note') + ' · ' + (profile.signMode === 'none' ? 'No signature' : 'Signature on');
+    updateSampleBar();
   }
 
   /* design */
@@ -1478,6 +1489,44 @@ body.is-modal .toast.show{transform:translate(-50%,0)}
     reader.readAsDataURL(file);
   }
 
+  /* ───────────── sample data ───────────── */
+  /* example details that must never reach a real receipt by accident */
+  function sampleLeft() {
+    const sp = sampleProfile(), sd = sampleDoc();
+    const left = [];
+    const same = (a, b) => clean(a) !== '' && clean(a) === clean(b);
+    if (same(profile.name, sp.name)) left.push(['business name', '[data-bind="profile.name"]']);
+    if (same(profile.email, sp.email)) left.push(['your email', '[data-bind="profile.email"]']);
+    if (same(profile.taxId, sp.taxId)) left.push(['Tax ID', '[data-bind="profile.taxId"]']);
+    if (same(profile.address, sp.address)) left.push(['your address', '[data-bind="profile.address"]']);
+    if (same(docState.clientName, sd.clientName)) left.push(['client name', '[data-bind="doc.clientName"]']);
+    if (same(docState.clientEmail, sd.clientEmail)) left.push(['client email', '[data-bind="doc.clientEmail"]']);
+    if (same(docState.clientAddress, sd.clientAddress)) left.push(['client address', '[data-bind="doc.clientAddress"]']);
+    if (same(docState.reference, sd.reference)) left.push(['reference', '[data-bind="doc.reference"]']);
+    const sampleDescs = sd.items.map(it => it.desc);
+    const idx = docState.items.findIndex(it => sampleDescs.indexOf(clean(it.desc)) !== -1);
+    if (idx !== -1) left.push(['sample items', '#items input[data-i="' + idx + '"][data-f="desc"]']);
+    if (profile.signMode === 'typed' && same(profile.signName, sp.signName)) left.push(['signature name', '[data-bind="profile.signName"]']);
+    return left;
+  }
+  function updateSampleBar() {
+    const bar = $('#sampleBar');
+    if (bar) bar.hidden = sampleLeft().length === 0;
+  }
+  function clearSample() {
+    const sp = sampleProfile(), sd = sampleDoc();
+    ['name', 'email', 'taxId', 'address'].forEach(k => { if (clean(profile[k]) === clean(sp[k])) profile[k] = ''; });
+    if (clean(profile.signName) === clean(sp.signName)) profile.signName = '';
+    ['clientName', 'clientEmail', 'clientAddress', 'reference'].forEach(k => { if (clean(docState[k]) === clean(sd[k])) docState[k] = ''; });
+    const sampleDescs = sd.items.map(it => it.desc);
+    docState.items = docState.items.filter(it => sampleDescs.indexOf(clean(it.desc)) === -1);
+    if (!docState.items.length) docState.items = [{ desc: '', qty: 1, rate: 0 }];
+    if (docState.status !== 'paid') docState.paid = 0;
+    syncEditor(); renderSheet(); persist();
+    toast('Sample details cleared — add your own.');
+    focusField('[data-bind="profile.name"]');
+  }
+
   /* ───────────── checks before export ───────────── */
   function paidProblem(c) {
     const st = docState.status;
@@ -1489,6 +1538,8 @@ body.is-modal .toast.show{transform:translate(-50%,0)}
   }
   /* returns [message, element to focus] for the first thing that would print a wrong or empty receipt */
   function exportProblem() {
+    const left = sampleLeft();
+    if (left.length) return ['Sample details are still on the receipt (' + left.map(x => x[0]).join(', ') + '). Replace them or use “Clear sample details”.', left[0][1]];
     const c = calc();
     if (!clean(profile.name)) return ['Add your business name first.', '[data-bind="profile.name"]'];
     if (!clean(docState.clientName)) return ['Add who paid you (client name) first.', '[data-bind="doc.clientName"]'];
@@ -2008,6 +2059,7 @@ body.is-modal .toast.show{transform:translate(-50%,0)}
 
     /* pro */
     $('#unlockBtn').addEventListener('click', () => openPro('upgrade'));
+    $('#clearSample').addEventListener('click', clearSample);
     $$('[data-close]').forEach(b => b.addEventListener('click', closeModals));
     $$('.modal-backdrop').forEach(b => b.addEventListener('click', e => { if (e.target === b) closeModals(); }));
     document.addEventListener('keydown', e => { if (e.key === 'Escape') closeModals(); });
