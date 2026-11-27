@@ -411,6 +411,9 @@ input[type=date]{min-height:42px}
   display:flex;align-items:center;justify-content:space-between;gap:16px;flex-wrap:wrap;
   padding:26px 4px 0;color:var(--faint);font-size:12px;
 }
+.foot-links{display:flex;gap:4px 14px;flex-wrap:wrap}
+.foot-links a{color:var(--muted);font-size:12px;text-decoration:none;padding:10px 0}
+.foot-links a:hover{color:var(--ink);text-decoration:underline}
 .reset-btn{background:none;border:0;padding:10px 6px;margin:-10px -6px;min-height:40px;color:#a8a292;font-size:11.5px;cursor:pointer;text-decoration:underline;text-underline-offset:3px}
 /* fingers need bigger targets than mouse pointers */
 @media (pointer:coarse){
@@ -1064,6 +1067,12 @@ body.is-modal .toast.show{transform:translate(-50%,0)}
 
   <footer class="app-foot">
     <span>Your draft saves in this browser only. Free plan: 3 PDF exports a month.</span>
+    <nav class="foot-links" aria-label="Legal">
+      <a href="privacy.html">Privacy</a>
+      <a href="terms.html">Terms</a>
+      <a href="refund.html">Refunds</a>
+      <a href="mailto:swiftbill26@gmail.com">Contact</a>
+    </nav>
     <button type="button" class="reset-btn" id="resetBtn">Start over</button>
   </footer>
 </main>
@@ -1096,7 +1105,7 @@ body.is-modal .toast.show{transform:translate(-50%,0)}
     </ul>
     <div class="price-row"><span class="price">$9</span><span class="price-note">once · yours forever · no account</span></div>
     <a class="btn btn-primary btn-block" href="#" id="buyBtn" target="_blank" rel="noopener">Get Pro — $9</a>
-    <p class="tiny">Already bought? Enter the license key from your purchase email below.</p>
+    <p class="tiny">Secure checkout via Gumroad · Your license key is emailed right after purchase. Already bought? Enter it below.</p>
     <div class="code-block">
       <div class="divider">Already purchased?</div>
       <label for="codeInput" style="margin-top:14px">License key</label>
@@ -1148,8 +1157,15 @@ body.is-modal .toast.show{transform:translate(-50%,0)}
   /* ───────────── constants ───────────── */
   /* ── owner settings ──────────────────────────────────────────
      CHECKOUT_URL        Gumroad product page (empty = button shows "opening soon")
+     GUMROAD_PRODUCT_IDS Gumroad product IDs whose license keys unlock Pro (this app first; the bundle goes here too)
      OWNER_CODE_HASHES   SHA-256 of the owner's test key (the key itself is never in the source) */
-  const CHECKOUT_URL = '';
+  const CHECKOUT_URL = 'https://swiftbill4.gumroad.com/l/receipt';
+  const GUMROAD_PRODUCT_IDS = ['vLo6JYrowpBZ4_jcufsJpw=='];
+  const CONTACT_EMAIL = 'swiftbill26@gmail.com';
+  const MAX_DEVICES = 3;
+  const RECHECK_MS = 10 * 60 * 1000;                    /* re-check a Gumroad key at most every 10 min (on each visit) */
+  const OFFLINE_GRACE_MS = 30 * 24 * 60 * 60 * 1000;    /* keep Pro offline for up to 30 days after the last successful check */
+  const VERIFY_TIMEOUT_MS = 12000;
   const OWNER_CODE_HASHES = ['9c2cc8fd61ee9b506fd82cc60ed0eef4d57089b46154679989a298d18756225e'];
   const FREE_LIMIT = 3;
   const FREE_RETRY_MS = 30 * 60 * 1000; /* the same receipt can be exported again for 30 min without counting (print window closed) */
@@ -1986,32 +2002,105 @@ body.is-modal .toast.show{transform:translate(-50%,0)}
     try { return OWNER_CODE_HASHES.indexOf(await sha256Hex(String(code).toUpperCase())) !== -1; } catch (e) { return false; }
   }
   function refreshAll() { updateChrome(); syncEditor(); renderTemplates(); updateDesign(); renderSheet(); }
+  /* POST https://api.gumroad.com/v2/licenses/verify for one product.
+     Returns { kind: 'ok' | 'invalid' | 'revoked' | 'server' | 'network', uses } */
+  async function gumroadVerifyOne(pid, key, increment) {
+    const body = new URLSearchParams({ product_id: pid, license_key: key, increment_uses_count: increment ? 'true' : 'false' });
+    let res, j = null;
+    const ctrl = (typeof AbortController !== 'undefined') ? new AbortController() : null;
+    const timer = ctrl ? setTimeout(() => ctrl.abort(), VERIFY_TIMEOUT_MS) : null;
+    try {
+      res = await fetch('https://api.gumroad.com/v2/licenses/verify', { method: 'POST', body: body, signal: ctrl ? ctrl.signal : undefined });
+    } catch (e) {
+      return { kind: 'network' };
+    } finally { if (timer) clearTimeout(timer); }
+    try { j = await res.json(); } catch (e) { j = null; }
+    if (res.status === 429 || res.status >= 500) return { kind: 'server' };
+    if (!j) return { kind: res.ok ? 'server' : 'invalid' };
+    if (j.success !== true) return { kind: /disabled|refund|cancel/i.test(String(j.message || '')) ? 'revoked' : 'invalid' };
+    const pu = j.purchase || {};
+    if (pu.refunded || pu.chargebacked || pu.disputed) return { kind: 'revoked' };
+    return { kind: 'ok', uses: Math.max(0, parseInt(j.uses, 10) || 0) };
+  }
+  /* tries this app's product, then the bundle; a key only belongs to one of them */
+  async function gumroadVerify(key, increment, onlyPid) {
+    const ids = onlyPid ? [onlyPid] : GUMROAD_PRODUCT_IDS;
+    let last = { kind: 'invalid' };
+    for (const pid of ids) {
+      const r = await gumroadVerifyOne(pid, key, increment);
+      if (r.kind !== 'invalid') return Object.assign(r, { pid: pid });
+      last = r;
+    }
+    return last;
+  }
+  function grantPro(key, src, pid) {
+    proActive = true;
+    flags.license = key; flags.src = src; flags.pid = pid || ''; flags.checkedAt = Date.now();
+    persist();
+    closeModals(); refreshAll();
+    toast('Pro unlocked — unlimited exports, watermark removed.');
+  }
+  function revokePro(message) {
+    const was = proActive;
+    proActive = false;
+    flags.license = ''; flags.src = ''; flags.pid = ''; flags.checkedAt = 0;
+    save(K_FLAGS, flags);
+    refreshAll();
+    if (was && message) toast(message);
+  }
+  const KEY_MSG = {
+    invalid: "We couldn't find that license key. Copy it exactly from your Gumroad receipt — it looks like XXXXXXXX-XXXXXXXX-XXXXXXXX-XXXXXXXX.",
+    revoked: 'This license key was refunded or disabled, so it can’t unlock Pro. Questions? ' + CONTACT_EMAIL,
+    server: 'Gumroad’s license check isn’t answering right now. Please try again in a minute — nothing was used up.',
+    network: 'Couldn’t reach Gumroad to check your key. Check your internet connection and try again — nothing was used up.',
+    devices: 'This key is already active on ' + MAX_DEVICES + ' devices or browsers. New device, or cleared your browser data? Email ' + CONTACT_EMAIL + ' with your receipt and we’ll reset it.',
+    register: 'Your key is valid, but we couldn’t register this browser just now. Please try again — Pro isn’t unlocked yet.'
+  };
   let codeBusy = false;
   async function tryCode(raw) {
-    if (codeBusy) return;
-    const code = String(raw || '').replace(/\s+/g, '').toUpperCase();
+    if (codeBusy) return;                                   /* ignore double taps / Enter + click */
+    const code = String(raw || '').replace(/\s+/g, '');
     const err = $('#codeErr');
+    const btn = $('#applyCode');
     err.className = 'code-err';
     err.textContent = '';
-    if (!code) { err.textContent = 'Enter the license key from your purchase email.'; return; }
-    codeBusy = true;
+    if (!code) { err.textContent = 'Enter the license key from your Gumroad receipt.'; return; }
+    codeBusy = true; btn.disabled = true; const label = btn.textContent; btn.textContent = 'Checking…';
     try {
-      if (await isOwnerCode(code)) {
-        proActive = true;
-        flags.license = code; flags.src = 'owner';
-        persist();
-        closeModals();
-        refreshAll();
-        toast('Pro unlocked — unlimited exports, watermark removed.');
-        return;
-      }
-      err.textContent = 'We couldn’t find that license key. Copy it exactly from your purchase email.';
-    } finally { codeBusy = false; }
+      if (await isOwnerCode(code)) { grantPro(code.toUpperCase(), 'owner'); return; }
+      if (!GUMROAD_PRODUCT_IDS.length) { err.textContent = KEY_MSG.invalid; return; }
+      const same = flags.src === 'gumroad' && flags.license === code;   /* this browser already counted */
+      const r = await gumroadVerify(code, false);
+      if (r.kind !== 'ok') { err.textContent = KEY_MSG[r.kind] || KEY_MSG.invalid; return; }
+      if (same) { grantPro(code, 'gumroad', r.pid); return; }
+      if (r.uses >= MAX_DEVICES) { err.textContent = KEY_MSG.devices; return; }
+      const inc = await gumroadVerify(code, true, r.pid);              /* count this browser */
+      if (inc.kind !== 'ok') { err.textContent = inc.kind === 'revoked' ? KEY_MSG.revoked : (inc.kind === 'invalid' ? KEY_MSG.invalid : KEY_MSG.register); return; }
+      if (inc.uses > MAX_DEVICES) { err.textContent = KEY_MSG.devices; return; }  /* lost a race with another device */
+      grantPro(code, 'gumroad', r.pid);
+    } finally {
+      codeBusy = false; btn.disabled = false; btn.textContent = label;
+    }
   }
-  /* decide Pro at start-up from the stored key — a stored "pro" flag alone never unlocks anything */
+  /* Decide Pro at start-up from the stored key, never from a stored "pro" flag.
+     Gumroad keys are re-checked on each visit (at most every 10 min): refunded/disabled/unknown keys lose Pro;
+     network or server trouble keeps Pro for up to 30 days after the last good check. */
   async function initLicense() {
-    if (flags.src === 'owner' && await isOwnerCode(flags.license)) { proActive = true; refreshAll(); return; }
-    if (flags.license || flags.src) { flags.license = ''; flags.src = ''; save(K_FLAGS, flags); }
+    const lic = String(flags.license || '');
+    if (flags.src === 'owner') { if (await isOwnerCode(lic)) { proActive = true; refreshAll(); } else revokePro(''); return; }
+    if (flags.src !== 'gumroad' || !lic || !GUMROAD_PRODUCT_IDS.length) { if (flags.license || flags.src) revokePro(''); return; }
+    const pid = GUMROAD_PRODUCT_IDS.indexOf(flags.pid) !== -1 ? flags.pid : '';
+    const last = +flags.checkedAt || 0;
+    proActive = last > 0 && (Date.now() - last) < OFFLINE_GRACE_MS;   /* provisional until Gumroad answers */
+    refreshAll();
+    let lastTry = 0;
+    try { lastTry = +sessionStorage.getItem('swiftreceipt.licCheck') || 0; } catch (e) {}
+    if (Date.now() - lastTry < RECHECK_MS && proActive) return;
+    try { sessionStorage.setItem('swiftreceipt.licCheck', String(Date.now())); } catch (e) {}
+    const r = await gumroadVerify(lic, false, pid || undefined);
+    if (r.kind === 'ok') { flags.checkedAt = Date.now(); if (r.pid) flags.pid = r.pid; save(K_FLAGS, flags); if (!proActive) { proActive = true; refreshAll(); } return; }
+    if (r.kind === 'invalid' || r.kind === 'revoked') { revokePro('Your Pro license is no longer active (refunded or disabled). Questions? ' + CONTACT_EMAIL); return; }
+    if (!proActive && last > 0) toast('Couldn’t confirm your Pro license — connect to the internet and reopen SwiftReceipt.');
   }
 
   function openModal(id) {
