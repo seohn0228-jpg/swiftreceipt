@@ -1,0 +1,4 @@
+User-agent: *
+Allow: /
+
+Sitemap: https://seohn0228-jpg.github.io/swiftreceipt/sitemap.xml
